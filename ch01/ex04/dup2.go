@@ -46,17 +46,17 @@ func Dup(files []string) (map[string][]string, error) {
 
 	if len(files) == 0 {
 		CountLines("<stdin>", DefaultSource, counts)
-		return counts, nil
+	} else {
+		for _, file := range files {
+			f, err := os.Open(file)
+			if err != nil {
+				return nil, fmt.Errorf("dup2: %v", err)
+			}
+			CountLines(file, f, counts)
+			f.Close()
+		}
 	}
 
-	for _, file := range files {
-		f, err := os.Open(file)
-		if err != nil {
-			return nil, fmt.Errorf("dup2: %v", err)
-		}
-		CountLines(file, f, counts)
-		f.Close()
-	}
 	for line, fs := range counts {
 		if len(fs) == 1 {
 			delete(counts, line)
