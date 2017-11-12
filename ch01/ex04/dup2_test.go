@@ -61,6 +61,14 @@ func TestCountLines(t *testing.T) {
 				"2": {"file.txt"},
 			},
 		},
+		{
+			text: "1\n2\n1\n1",
+			name: "file.txt",
+			expected: map[string][]string{
+				"1": {"file.txt", "file.txt", "file.txt"},
+				"2": {"file.txt"},
+			},
+		},
 	}
 	for _, tc := range ts {
 		c := make(map[string][]string)
