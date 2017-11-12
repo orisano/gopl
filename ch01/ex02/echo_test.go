@@ -12,6 +12,6 @@ func TestEcho(t *testing.T) {
 	got := b.String()
 	expected := "0 a\n1 b\n2 c\n3 de\n4 fgh\n"
 	if got != expected {
-		t.Error("unexpected output. expected: %v, got: %v", expected, got)
+		t.Errorf("unexpected output. expected: %v, but got: %v", expected, got)
 	}
 }
