@@ -16,10 +16,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 	}
 	for line, files := range counts {
-		if len(files) > 1 {
-			fmt.Printf("%d\t%s\n", len(files), line)
-			fmt.Println(strings.Join(Unique(files), ","))
-		}
+		fmt.Printf("%d\t%s\n", len(files), line)
+		fmt.Println(strings.Join(Unique(files), ","))
 	}
 }
 
@@ -58,6 +56,11 @@ func Dup(files []string) (map[string][]string, error) {
 		}
 		CountLines(file, f, counts)
 		f.Close()
+	}
+	for line, fs := range counts {
+		if len(fs) == 1 {
+			delete(counts, line)
+		}
 	}
 	return counts, nil
 }
