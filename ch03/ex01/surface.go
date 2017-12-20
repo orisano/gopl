@@ -14,7 +14,7 @@ const (
 	angle         = math.Pi / 6
 )
 
-var sin30, cos30 = math.Sin(angle), math.Cos(angle)
+var sin30, cos30 = math.Sincos(angle)
 
 func main() {
 	fmt.Printf("<svg xmlns='http://www.w3.org/2000/svg' "+
@@ -28,11 +28,11 @@ func main() {
 			dx, dy := corner(i+1, j+1)
 			func() {
 				for _, x := range []float64{ax, ay, bx, by, cx, cy, dx, dy} {
-					if math.IsInf(x, 0) {
+					if math.IsInf(x, 0) || math.IsNaN(x) {
 						return
 					}
 				}
-				fmt.Printf("<polygon points='%g %g %g %g %g %g %g %g'/>\n", ax, ay, bx, by, cx, cy, dx, dy)
+				fmt.Printf("<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n", ax, ay, bx, by, cx, cy, dx, dy)
 			}()
 		}
 	}
@@ -52,5 +52,5 @@ func corner(i, j int) (float64, float64) {
 
 func f(x, y float64) float64 {
 	r := math.Hypot(x, y)
-	return math.Sin(r)
+	return math.Sin(r) / r
 }
