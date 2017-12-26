@@ -8,7 +8,7 @@ import (
 	"github.com/orisano/gopl/ch05/links"
 )
 
-func breadthFirst(f func(itme string) []string, worklist []string) {
+func breadthFirst(f func(item string) []string, worklist []string) {
 	seen := make(map[string]bool)
 	for len(worklist) > 0 {
 		items := worklist
