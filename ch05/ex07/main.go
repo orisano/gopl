@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -58,32 +59,34 @@ func Indent(s, indent string) string {
 	return strings.Join(result, "\n")
 }
 
+var defaultWriter io.Writer = os.Stdout
+
 func startElement(n *html.Node) {
 	switch n.Type {
 	case html.ElementNode:
-		fmt.Printf("%*s<%s", depth*2, "", n.Data)
+		fmt.Fprintf(defaultWriter, "%*s<%s", depth*2, "", n.Data)
 		for _, a := range n.Attr {
-			fmt.Printf(" %s=%q", a.Key, a.Val)
+			fmt.Fprintf(defaultWriter, " %s=%q", a.Key, a.Val)
 		}
 		if n.FirstChild == nil {
-			fmt.Println("/>")
+			fmt.Fprintln(defaultWriter, "/>")
 		} else {
-			fmt.Println(">")
+			fmt.Fprintln(defaultWriter, ">")
 			depth++
 		}
 	case html.TextNode:
 		s := strings.TrimSpace(n.Data)
 		if len(s) > 0 {
-			fmt.Println(Indent(s, strings.Repeat(" ", depth*2)))
+			fmt.Fprintln(defaultWriter, Indent(s, strings.Repeat(" ", depth*2)))
 		}
 	case html.CommentNode:
-		fmt.Printf("%*s<!-- %s -->\n", depth*2, "", n.Data)
+		fmt.Fprintf(defaultWriter, "%*s<!-- %s -->\n", depth*2, "", n.Data)
 	}
 }
 
 func endElement(n *html.Node) {
 	if n.Type == html.ElementNode && n.FirstChild != nil {
 		depth--
-		fmt.Printf("%*s</%s>\n", depth*2, "", n.Data)
+		fmt.Fprintf(defaultWriter, "%*s</%s>\n", depth*2, "", n.Data)
 	}
 }
