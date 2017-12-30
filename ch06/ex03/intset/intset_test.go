@@ -91,6 +91,56 @@ func TestIntSet_Add(t *testing.T) {
 	}
 }
 
+func TestIntSet_AddAll(t *testing.T) {
+	ts := []struct {
+		intSet   *IntSet
+		adds     [][]int
+		expected map[int]bool
+	}{
+		{
+			intSet: newIntSet(1, 10, 100, 1000),
+			adds:   [][]int{{0, 1, 2, 3}, {50, 51}, {500, 10000}},
+			expected: map[int]bool{
+				0:     true,
+				1:     true,
+				2:     true,
+				3:     true,
+				4:     false,
+				9:     false,
+				10:    true,
+				11:    false,
+				49:    false,
+				50:    true,
+				51:    true,
+				52:    false,
+				99:    false,
+				100:   true,
+				101:   false,
+				499:   false,
+				500:   true,
+				501:   false,
+				999:   false,
+				1000:  true,
+				1001:  false,
+				9999:  false,
+				10000: true,
+				10001: false,
+			},
+		},
+	}
+
+	for _, tc := range ts {
+		for _, x := range tc.adds {
+			tc.intSet.AddAll(x...)
+		}
+		for x, expected := range tc.expected {
+			if got := tc.intSet.Has(x); got != expected {
+				t.Errorf("unexpected Has(%d). expected: %v, but got: %v", x, expected, got)
+			}
+		}
+	}
+}
+
 func TestIntSet_UnionWith(t *testing.T) {
 	ts := []struct {
 		from, to *IntSet
