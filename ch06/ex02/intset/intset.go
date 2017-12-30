@@ -33,39 +33,6 @@ func (s *IntSet) UnionWith(t *IntSet) {
 	}
 }
 
-func (s *IntSet) IntersectWith(t *IntSet) {
-	if len(s.words) > len(t.words) {
-		s.words = s.words[:len(t.words)]
-	}
-	for i, tword := range t.words {
-		if i < len(s.words) {
-			s.words[i] &= tword
-		} else {
-			break
-		}
-	}
-}
-
-func (s *IntSet) DifferenceWith(t *IntSet) {
-	for i, tword := range t.words {
-		if i < len(s.words) {
-			s.words[i] &^= tword
-		} else {
-			break
-		}
-	}
-}
-
-func (s *IntSet) SymmetricDifference(t *IntSet) {
-	for i, tword := range t.words {
-		if i < len(s.words) {
-			s.words[i] ^= tword
-		} else {
-			s.words = append(s.words, tword)
-		}
-	}
-}
-
 func (s *IntSet) String() string {
 	var buf bytes.Buffer
 	buf.WriteByte('{')
@@ -78,7 +45,7 @@ func (s *IntSet) String() string {
 				if buf.Len() > len("{") {
 					buf.WriteByte(' ')
 				}
-				fmt.Fprint(&buf, "%d", 64*i+j)
+				fmt.Fprintf(&buf, "%d", 64*i+j)
 			}
 		}
 	}
@@ -110,6 +77,39 @@ func (s *IntSet) Clear() {
 
 func (s *IntSet) Copy() *IntSet {
 	return &IntSet{
-		words: append(nil, s.words...),
+		words: append([]uint64(nil), s.words...),
+	}
+}
+
+func (s *IntSet) IntersectWith(t *IntSet) {
+	if len(s.words) > len(t.words) {
+		s.words = s.words[:len(t.words)]
+	}
+	for i, tword := range t.words {
+		if i < len(s.words) {
+			s.words[i] &= tword
+		} else {
+			break
+		}
+	}
+}
+
+func (s *IntSet) DifferenceWith(t *IntSet) {
+	for i, tword := range t.words {
+		if i < len(s.words) {
+			s.words[i] &^= tword
+		} else {
+			break
+		}
+	}
+}
+
+func (s *IntSet) SymmetricDifference(t *IntSet) {
+	for i, tword := range t.words {
+		if i < len(s.words) {
+			s.words[i] ^= tword
+		} else {
+			s.words = append(s.words, tword)
+		}
 	}
 }
