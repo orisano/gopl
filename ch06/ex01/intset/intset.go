@@ -77,6 +77,6 @@ func (s *IntSet) Clear() {
 
 func (s *IntSet) Copy() *IntSet {
 	return &IntSet{
-		words: append(nil, s.words...),
+		words: append([]uint64(nil), s.words...),
 	}
 }
