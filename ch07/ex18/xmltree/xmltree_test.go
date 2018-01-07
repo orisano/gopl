@@ -93,6 +93,15 @@ func TestBuild(t *testing.T) {
 				},
 			},
 		},
+		{
+			xml: `<x:foo></x:foo>`,
+			expected: []Node{
+				&Element{
+					Type: xml.Name{Space: "x", Local: "foo"},
+					Attr: []xml.Attr{},
+				},
+			},
+		},
 	}
 
 	for _, tc := range ts {
