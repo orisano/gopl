@@ -1,5 +1,8 @@
 package ftpcodes
 
+// rfc640
+// https://tools.ietf.org/rfc/rfc640.txt
+
 const (
 	PositivePreliminary         = 100
 	PositiveCompletion          = 200
