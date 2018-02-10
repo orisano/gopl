@@ -116,6 +116,17 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 		}
 	case "noop":
 		c.writeReply(ftpcodes.CommandOkay)
+	case "mode":
+		if len(args) != 1 {
+			c.writeReply(ftpcodes.CommandSyntaxError)
+			return true
+		}
+		switch args[0] {
+		case "S":
+		case "B", "C":
+			c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+			return true
+		}
 	default:
 		c.writeReply(ftpcodes.CommandNotImplemented)
 	}
