@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/orisano/gopl/ch08/ex02/goftp/ftpcodes"
@@ -15,6 +16,8 @@ type Conn struct {
 	conn             net.Conn
 	fs               FileSystem
 	workingDirectory string
+
+	dataPort *net.TCPAddr
 }
 
 func (c *Conn) Handle() {
@@ -36,6 +39,26 @@ func (c *Conn) Handle() {
 	}
 }
 
+type byteParser struct {
+	err error
+}
+
+func (p *byteParser) Parse(s string) byte {
+	if p.err != nil {
+		return 0
+	}
+	x, err := strconv.ParseInt(s, 10, 8)
+	if err != nil {
+		p.err = err
+		return 0
+	}
+	return byte(x)
+}
+
+func (p *byteParser) Err() error {
+	return p.err
+}
+
 func (c *Conn) runCommand(cmd string, args []string) bool {
 	switch strings.ToLower(cmd) {
 	case "user":
@@ -49,6 +72,20 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 		c.writeReply(ftpcodes.Entering)
 	case "feat":
 		c.writeReply(ftpcodes.SystemStatus)
+	case "port":
+		tokens := strings.Split(args[0], ",")
+		bp := &byteParser{}
+		h1 := bp.Parse(tokens[0])
+		h2 := bp.Parse(tokens[1])
+		h3 := bp.Parse(tokens[2])
+		h4 := bp.Parse(tokens[3])
+		p1 := bp.Parse(tokens[4])
+		p2 := bp.Parse(tokens[5])
+		c.dataPort = &net.TCPAddr{
+			IP:   net.IPv4(h1, h2, h3, h4),
+			Port: int(p1)*256 + int(p2),
+		}
+		c.writeReply(ftpcodes.CommandOkay)
 	default:
 		c.writeReply(ftpcodes.CommandNotImplemented)
 	}
@@ -76,6 +113,8 @@ func (c *Conn) writeReply(code int) error {
 		return write(fmt.Sprintf("%q currenct working directory", c.workingDirectory))
 	case ftpcodes.SystemStatus:
 		return write("No features")
+	case ftpcodes.CommandOkay:
+		return write("Command OK")
 	default:
 		panic(fmt.Sprintf("unknown code: %v", code))
 	}
