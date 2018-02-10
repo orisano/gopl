@@ -86,6 +86,23 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 			Port: int(p1)*256 + int(p2),
 		}
 		c.writeReply(ftpcodes.CommandOkay)
+	case "type":
+		for i := 0; i < len(args); i++ {
+			switch args[i] {
+			case "A":
+				continue
+			case "L":
+				if i+1 >= len(args) {
+					c.writeReply(ftpcodes.CommandSyntaxError)
+					return true
+				}
+				i++
+			case "E", "I":
+				c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+				return true
+			}
+		}
+		c.writeReply(ftpcodes.CommandOkay)
 	default:
 		c.writeReply(ftpcodes.CommandNotImplemented)
 	}
@@ -115,6 +132,10 @@ func (c *Conn) writeReply(code int) error {
 		return write("No features")
 	case ftpcodes.CommandOkay:
 		return write("Command OK")
+	case ftpcodes.CommandSyntaxError:
+		return write("Command Syntax Error")
+	case ftpcodes.CommandNotImplementedForParameter:
+		return write("Command not implemented for that parameter")
 	default:
 		panic(fmt.Sprintf("unknown code: %v", code))
 	}
