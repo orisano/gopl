@@ -45,6 +45,8 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 		return false
 	case "syst":
 		c.writeReply(ftpcodes.SystemType)
+	case "pwd":
+		c.writeReply(ftpcodes.Entering)
 	default:
 		c.writeReply(ftpcodes.CommandNotImplemented)
 	}
@@ -68,6 +70,8 @@ func (c *Conn) writeReply(code int) error {
 	case ftpcodes.SystemType:
 		// https://www.iana.org/assignments/operating-system-names/operating-system-names.txt
 		return write("OSX system type")
+	case ftpcodes.Entering:
+		return write(fmt.Sprintf("%q currenct working directory", c.workingDirectory))
 	default:
 		panic(fmt.Sprintf("unknown code: %v", code))
 	}
