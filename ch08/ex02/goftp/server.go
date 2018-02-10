@@ -56,6 +56,8 @@ func (s *Server) runCommand(w io.Writer, cmd string, args []string) bool {
 	case "quit":
 		writeReply(w, ftpcodes.ServiceClosingTELNETConnection)
 		return false
+	case "syst":
+		writeReply(w, ftpcodes.SystemType)
 	default:
 		writeReply(w, ftpcodes.CommandNotImplemented)
 	}
@@ -96,6 +98,9 @@ func writeReply(w io.Writer, code int) error {
 		return write("User logged on, proceed")
 	case ftpcodes.ServiceClosingTELNETConnection:
 		return write("Service closing TELNET connection (logged off if appropriate)")
+	case ftpcodes.SystemType:
+		// https://www.iana.org/assignments/operating-system-names/operating-system-names.txt
+		return write("OSX system type")
 	default:
 		panic(fmt.Sprintf("unknown code: %v", code))
 	}

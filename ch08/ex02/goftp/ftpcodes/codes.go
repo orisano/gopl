@@ -33,6 +33,7 @@ const (
 	DirectoryStatus                   = PositiveCompletion + Information + 2
 	FileStatus                        = PositiveCompletion + Information + 3
 	HelpMessage                       = PositiveCompletion + Information + 4
+	SystemType                        = PositiveCompletion + Information + 5
 	ServiceReadyInNMinutes            = PositivePreliminary + Connections + 0
 	ServiceReadyForNewUser            = PositiveCompletion + Connections + 0
 	ServiceClosingTELNETConnection    = PositiveCompletion + Connections + 1
