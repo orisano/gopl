@@ -47,6 +47,8 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 		c.writeReply(ftpcodes.SystemType)
 	case "pwd":
 		c.writeReply(ftpcodes.Entering)
+	case "feat":
+		c.writeReply(ftpcodes.SystemStatus)
 	default:
 		c.writeReply(ftpcodes.CommandNotImplemented)
 	}
@@ -72,6 +74,8 @@ func (c *Conn) writeReply(code int) error {
 		return write("OSX system type")
 	case ftpcodes.Entering:
 		return write(fmt.Sprintf("%q currenct working directory", c.workingDirectory))
+	case ftpcodes.SystemStatus:
+		return write("No features")
 	default:
 		panic(fmt.Sprintf("unknown code: %v", code))
 	}
