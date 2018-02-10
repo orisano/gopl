@@ -114,6 +114,8 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 			c.writeReply(ftpcodes.CommandNotImplementedForParameter)
 			return true
 		}
+	case "noop":
+		c.writeReply(ftpcodes.CommandOkay)
 	default:
 		c.writeReply(ftpcodes.CommandNotImplemented)
 	}
