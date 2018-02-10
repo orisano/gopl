@@ -42,17 +42,24 @@ func (s *Server) handleConn(conn net.Conn) {
 
 		tokens := strings.Split(line, " ")
 		cmd, args := tokens[0], tokens[1:]
-		s.runCommand(conn, cmd, args)
+		next := s.runCommand(conn, cmd, args)
+		if !next {
+			break
+		}
 	}
 }
 
-func (s *Server) runCommand(w io.Writer, cmd string, args []string) {
+func (s *Server) runCommand(w io.Writer, cmd string, args []string) bool {
 	switch strings.ToLower(cmd) {
 	case "user":
 		writeReply(w, ftpcodes.UserLoggedOn)
+	case "quit":
+		writeReply(w, ftpcodes.ServiceClosingTELNETConnection)
+		return false
 	default:
 		writeReply(w, ftpcodes.CommandNotImplemented)
 	}
+	return true
 }
 
 func Serve(l net.Listener, fs FileSystem) error {
@@ -87,6 +94,8 @@ func writeReply(w io.Writer, code int) error {
 		return write("Command not implemented")
 	case ftpcodes.UserLoggedOn:
 		return write("User logged on, proceed")
+	case ftpcodes.ServiceClosingTELNETConnection:
+		return write("Service closing TELNET connection (logged off if appropriate)")
 	default:
 		panic(fmt.Sprintf("unknown code: %v", code))
 	}
