@@ -103,6 +103,17 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 			}
 		}
 		c.writeReply(ftpcodes.CommandOkay)
+	case "stru":
+		if len(args) != 1 {
+			c.writeReply(ftpcodes.CommandSyntaxError)
+			return true
+		}
+		switch args[0] {
+		case "F":
+		case "R", "P":
+			c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+			return true
+		}
 	default:
 		c.writeReply(ftpcodes.CommandNotImplemented)
 	}
