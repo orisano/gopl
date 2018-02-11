@@ -87,20 +87,27 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 		}
 		c.writeReply(ftpcodes.CommandOkay)
 	case "type":
-		for i := 0; i < len(args); i++ {
-			switch args[i] {
-			case "A":
-				continue
-			case "L":
-				if i+1 >= len(args) {
-					c.writeReply(ftpcodes.CommandSyntaxError)
-					return true
-				}
-				i++
-			case "E", "I":
-				c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+		if len(args) == 0 {
+			c.writeReply(ftpcodes.CommandSyntaxError)
+			return true
+		}
+		switch args[0] {
+		case "A":
+			if len(args) > 2 {
+				c.writeReply(ftpcodes.CommandSyntaxError)
 				return true
 			}
+			if len(args) == 1 {
+				switch args[1] {
+				case "N":
+				case "T", "C":
+					c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+					return true
+				}
+			}
+		case "E", "I", "L":
+			c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+			return true
 		}
 		c.writeReply(ftpcodes.CommandOkay)
 	case "stru":
