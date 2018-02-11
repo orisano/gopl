@@ -24,7 +24,7 @@ type ControlConn struct {
 func (c *ControlConn) Handle() {
 	defer c.conn.Close()
 
-	c.writeReply(ftpcodes.ServiceReadyForNewUser)
+	c.Send(ftpcodes.ServiceReadyForNewUser, "goftp service")
 
 	scanner := bufio.NewScanner(c.conn)
 	for scanner.Scan() {
@@ -38,6 +38,23 @@ func (c *ControlConn) Handle() {
 			break
 		}
 	}
+}
+
+func (c *ControlConn) Send(code int, msg string) error {
+	_, err := fmt.Fprint(c.conn, code, " ", msg, "\r\n")
+	return err
+}
+
+func (c *ControlConn) DataConn() (net.Conn, error) {
+	src := *c.conn.LocalAddr().(*net.TCPAddr)
+	src.Port = src.Port - 1
+	var dst net.TCPAddr
+	if c.dataPort != nil {
+		dst = *c.dataPort
+	} else {
+		dst = *c.conn.RemoteAddr().(*net.TCPAddr)
+	}
+	return net.DialTCP("tcp", &src, &dst)
 }
 
 type byteParser struct {
@@ -63,16 +80,17 @@ func (p *byteParser) Err() error {
 func (c *ControlConn) runCommand(cmd string, args []string) bool {
 	switch strings.ToLower(cmd) {
 	case "user":
-		c.writeReply(ftpcodes.UserLoggedOn)
+		c.Send(ftpcodes.UserLoggedOn, "Welcome")
 	case "quit":
-		c.writeReply(ftpcodes.ServiceClosingTELNETConnection)
+		c.Send(ftpcodes.ServiceClosingTELNETConnection, "Good bye")
 		return false
 	case "syst":
-		c.writeReply(ftpcodes.SystemType)
+		// https://www.iana.org/assignments/operating-system-names/operating-system-names.txt
+		c.Send(ftpcodes.SystemStatus, "OSX system type")
 	case "pwd":
-		c.writeReply(ftpcodes.Entering)
+		c.Send(ftpcodes.Entering, fmt.Sprintf("%q current working directory", c.workingDirectory))
 	case "feat":
-		c.writeReply(ftpcodes.SystemStatus)
+		c.Send(ftpcodes.SystemStatus, "No features")
 	case "port":
 		tokens := strings.Split(args[0], ",")
 		bp := &byteParser{}
@@ -86,68 +104,60 @@ func (c *ControlConn) runCommand(cmd string, args []string) bool {
 			IP:   net.IPv4(h1, h2, h3, h4),
 			Port: int(p1)*256 + int(p2),
 		}
-		c.writeReply(ftpcodes.CommandOkay)
+		CommandOK(c)
 	case "type":
 		if len(args) == 0 {
-			c.writeReply(ftpcodes.CommandSyntaxError)
+			CommandSyntaxError(c)
 			return true
 		}
 		switch args[0] {
 		case "A":
 			if len(args) > 2 {
-				c.writeReply(ftpcodes.CommandSyntaxError)
+				CommandSyntaxError(c)
 				return true
 			}
 			if len(args) == 1 {
 				switch args[1] {
 				case "N":
 				case "T", "C":
-					c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+					CommandNotImplementedForParameter(c)
 					return true
 				}
 			}
 		case "E", "I", "L":
-			c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+			CommandNotImplementedForParameter(c)
 			return true
 		}
-		c.writeReply(ftpcodes.CommandOkay)
+		CommandOK(c)
 	case "stru":
 		if len(args) != 1 {
-			c.writeReply(ftpcodes.CommandSyntaxError)
+			CommandSyntaxError(c)
 			return true
 		}
 		switch args[0] {
 		case "F":
 		case "R", "P":
-			c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+			CommandNotImplementedForParameter(c)
 			return true
 		}
 	case "noop":
-		c.writeReply(ftpcodes.CommandOkay)
+		CommandOK(c)
 	case "mode":
 		if len(args) != 1 {
-			c.writeReply(ftpcodes.CommandSyntaxError)
+			CommandSyntaxError(c)
 			return true
 		}
 		switch args[0] {
 		case "S":
 		case "B", "C":
-			c.writeReply(ftpcodes.CommandNotImplementedForParameter)
+			CommandNotImplementedForParameter(c)
 			return true
 		}
 	case "retr":
-		src := *c.conn.LocalAddr().(*net.TCPAddr)
-		src.Port = src.Port - 1
-		var dst net.TCPAddr
-		if c.dataPort != nil {
-			dst = *c.dataPort
-		} else {
-			dst = *c.conn.RemoteAddr().(*net.TCPAddr)
-		}
-		conn, err := net.DialTCP("tcp", &src, &dst)
+		conn, err := c.DataConn()
 		if err != nil {
 			c.logger.Print("connection error occurred: ", err)
-			c.writeReply(ftpcodes.ConnectionTrouble)
+			c.Send(ftpcodes.ConnectionTrouble, "Connection trouble")
 			return true
 		}
 		defer conn.Close()
@@ -155,51 +165,15 @@ func (c *ControlConn) runCommand(cmd string, args []string) bool {
 		f, err := c.fs.Get(args[0])
 		if err != nil {
 			c.logger.Print("failed to open file: ", err)
-			c.writeReply(ftpcodes.FileUnavailable)
+			c.Send(ftpcodes.FileUnavailable, "File unavailable")
 			return true
 		}
 		defer f.Close()
-		c.writeReply(ftpcodes.FileStatusOkay)
+		c.Send(ftpcodes.FileStatusOkay, "File status OK")
 		io.Copy(conn, f)
-		c.writeReply(ftpcodes.ClosingDataConnection)
+		c.Send(ftpcodes.ClosingDataConnection, "Transfer completed")
 	default:
-		c.writeReply(ftpcodes.CommandNotImplemented)
+		CommandNotImplemented(c)
 	}
 	return true
-}
-
-func (c *ControlConn) writeReply(code int) error {
-	write := func(msg string) error {
-		_, err := fmt.Fprint(c.conn, code, " ", msg, "\r\n")
-		return err
-	}
-	switch code {
-	case ftpcodes.ServiceReadyForNewUser:
-		return write("Service ready")
-	case ftpcodes.CommandNotImplemented:
-		return write("Command not implemented")
-	case ftpcodes.UserLoggedOn:
-		return write("User logged on, proceed")
-	case ftpcodes.ServiceClosingTELNETConnection:
-		return write("Service closing TELNET connection (logged off if appropriate)")
-	case ftpcodes.SystemType:
-		// https://www.iana.org/assignments/operating-system-names/operating-system-names.txt
-		return write("OSX system type")
-	case ftpcodes.Entering:
-		return write(fmt.Sprintf("%q currenct working directory", c.workingDirectory))
-	case ftpcodes.SystemStatus:
-		return write("No features")
-	case ftpcodes.CommandOkay:
-		return write("Command OK")
-	case ftpcodes.CommandSyntaxError:
-		return write("Command Syntax Error")
-	case ftpcodes.CommandNotImplementedForParameter:
-		return write("Command not implemented for that parameter")
-	case ftpcodes.FileStatusOkay:
-		return write("File OK")
-	case ftpcodes.ClosingDataConnection:
-		return write("Transfer complete.")
-	default:
-		panic(fmt.Sprintf("unknown code: %v", code))
-	}
 }
