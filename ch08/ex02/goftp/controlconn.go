@@ -12,7 +12,7 @@ import (
 	"github.com/orisano/gopl/ch08/ex02/goftp/ftpcodes"
 )
 
-type Conn struct {
+type ControlConn struct {
 	logger           *log.Logger
 	conn             net.Conn
 	fs               FileSystem
@@ -21,7 +21,7 @@ type Conn struct {
 	dataPort *net.TCPAddr
 }
 
-func (c *Conn) Handle() {
+func (c *ControlConn) Handle() {
 	defer c.conn.Close()
 
 	c.writeReply(ftpcodes.ServiceReadyForNewUser)
@@ -60,7 +60,7 @@ func (p *byteParser) Err() error {
 	return p.err
 }
 
-func (c *Conn) runCommand(cmd string, args []string) bool {
+func (c *ControlConn) runCommand(cmd string, args []string) bool {
 	switch strings.ToLower(cmd) {
 	case "user":
 		c.writeReply(ftpcodes.UserLoggedOn)
@@ -168,7 +168,7 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 	return true
 }
 
-func (c *Conn) writeReply(code int) error {
+func (c *ControlConn) writeReply(code int) error {
 	write := func(msg string) error {
 		_, err := fmt.Fprint(c.conn, code, " ", msg, "\r\n")
 		return err

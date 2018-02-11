@@ -20,7 +20,7 @@ func (s *Server) Serve(l net.Listener) error {
 			s.Logger.Printf("failed to accept: %v", err)
 			continue
 		}
-		c := &Conn{
+		c := &ControlConn{
 			logger:           s.Logger,
 			conn:             conn,
 			fs:               s.FileSystem,
