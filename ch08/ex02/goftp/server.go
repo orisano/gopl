@@ -14,6 +14,8 @@ type Server struct {
 
 func (s *Server) Serve(l net.Listener) error {
 	defer l.Close()
+	mux := DefalutCommandMux()
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
@@ -25,6 +27,8 @@ func (s *Server) Serve(l net.Listener) error {
 			conn:             conn,
 			fs:               s.FileSystem,
 			workingDirectory: "/",
+
+			handler: mux,
 		}
 		go c.Handle()
 	}
