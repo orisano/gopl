@@ -3,6 +3,7 @@ package goftp
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"strconv"
@@ -134,6 +135,33 @@ func (c *Conn) runCommand(cmd string, args []string) bool {
 			c.writeReply(ftpcodes.CommandNotImplementedForParameter)
 			return true
 		}
+	case "retr":
+		src := *c.conn.LocalAddr().(*net.TCPAddr)
+		src.Port = src.Port - 1
+		var dst net.TCPAddr
+		if c.dataPort != nil {
+			dst = *c.dataPort
+		} else {
+			dst = *c.conn.RemoteAddr().(*net.TCPAddr)
+		}
+		conn, err := net.DialTCP("tcp", &src, &dst)
+		if err != nil {
+			c.logger.Print("connection error occurred: ", err)
+			c.writeReply(ftpcodes.ConnectionTrouble)
+			return true
+		}
+		defer conn.Close()
+
+		f, err := c.fs.Get(args[0])
+		if err != nil {
+			c.logger.Print("failed to open file: ", err)
+			c.writeReply(ftpcodes.FileUnavailable)
+			return true
+		}
+		defer f.Close()
+		c.writeReply(ftpcodes.FileStatusOkay)
+		io.Copy(conn, f)
+		c.writeReply(ftpcodes.ClosingDataConnection)
 	default:
 		c.writeReply(ftpcodes.CommandNotImplemented)
 	}
@@ -167,6 +195,10 @@ func (c *Conn) writeReply(code int) error {
 		return write("Command Syntax Error")
 	case ftpcodes.CommandNotImplementedForParameter:
 		return write("Command not implemented for that parameter")
+	case ftpcodes.FileStatusOkay:
+		return write("File OK")
+	case ftpcodes.ClosingDataConnection:
+		return write("Transfer complete.")
 	default:
 		panic(fmt.Sprintf("unknown code: %v", code))
 	}
