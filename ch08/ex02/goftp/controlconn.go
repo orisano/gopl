@@ -57,11 +57,11 @@ func (c *ControlConn) DataConn() (net.Conn, error) {
 	return net.DialTCP("tcp", &src, &dst)
 }
 
-type byteParser struct {
+type int8Parser struct {
 	err error
 }
 
-func (p *byteParser) Parse(s string) byte {
+func (p *int8Parser) Parse(s string) byte {
 	if p.err != nil {
 		return 0
 	}
@@ -73,7 +73,7 @@ func (p *byteParser) Parse(s string) byte {
 	return byte(x)
 }
 
-func (p *byteParser) Err() error {
+func (p *int8Parser) Err() error {
 	return p.err
 }
 
@@ -93,13 +93,13 @@ func (c *ControlConn) runCommand(cmd string, args []string) bool {
 		c.Send(ftpcodes.SystemStatus, "No features")
 	case "port":
 		tokens := strings.Split(args[0], ",")
-		bp := &byteParser{}
-		h1 := bp.Parse(tokens[0])
-		h2 := bp.Parse(tokens[1])
-		h3 := bp.Parse(tokens[2])
-		h4 := bp.Parse(tokens[3])
-		p1 := bp.Parse(tokens[4])
-		p2 := bp.Parse(tokens[5])
+		p := &int8Parser{}
+		h1 := p.Parse(tokens[0])
+		h2 := p.Parse(tokens[1])
+		h3 := p.Parse(tokens[2])
+		h4 := p.Parse(tokens[3])
+		p1 := p.Parse(tokens[4])
+		p2 := p.Parse(tokens[5])
 		c.dataPort = &net.TCPAddr{
 			IP:   net.IPv4(h1, h2, h3, h4),
 			Port: int(p1)*256 + int(p2),
