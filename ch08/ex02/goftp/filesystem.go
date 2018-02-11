@@ -7,7 +7,7 @@ import (
 )
 
 type FileSystem interface {
-	Get(path string) (io.Reader, error)
+	Get(path string) (io.ReadCloser, error)
 }
 
 type RawFileSystem struct {
@@ -18,7 +18,7 @@ func (f *RawFileSystem) resolve(path string) string {
 	return filepath.Join(f.Root, path)
 }
 
-func (f *RawFileSystem) Get(path string) (io.Reader, error) {
+func (f *RawFileSystem) Get(path string) (io.ReadCloser, error) {
 	p := f.resolve(path)
 	file, err := os.Open(p)
 	if err != nil {
