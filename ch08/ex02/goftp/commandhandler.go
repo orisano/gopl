@@ -158,7 +158,7 @@ func DefalutCommandMux() *CommandMux {
 	mux.OnFunc("RETR", func(ctx *Context) bool {
 		conn, err := ctx.DataConn()
 		if err != nil {
-			ctx.controlConn.logger.Print("connection error occurred: ", err)
+			ctx.Logf("connection error occurred: %v", err)
 			ctx.Send(ftpcodes.ConnectionTrouble, "Connection trouble")
 			return true
 		}
@@ -166,7 +166,7 @@ func DefalutCommandMux() *CommandMux {
 
 		f, err := ctx.controlConn.fs.Get(ctx.Args[0])
 		if err != nil {
-			ctx.controlConn.logger.Print("failed to open file: ", err)
+			ctx.Logf("failed to open file: %v", err)
 			ctx.Send(ftpcodes.FileUnavailable, "File unavailable")
 			return true
 		}
@@ -174,6 +174,29 @@ func DefalutCommandMux() *CommandMux {
 		ctx.Send(ftpcodes.FileStatusOkay, "File status OK")
 		io.Copy(conn, f)
 		ctx.Send(ftpcodes.ClosingDataConnection, "Transfer completed")
+		return true
+	})
+
+	mux.OnFunc("STOR", func(ctx *Context) bool {
+		conn, err := ctx.DataConn()
+		if err != nil {
+			ctx.Logf("connection error occurred: %v", err)
+			ctx.Send(ftpcodes.ConnectionTrouble, "Connection trouble")
+			return true
+		}
+		defer conn.Close()
+
+		f, err := ctx.controlConn.fs.Create(ctx.Args[0])
+		if err != nil {
+			ctx.controlConn.logger.Print("failed to create file: ", err)
+			ctx.Send(ftpcodes.FileUnavailable, "File unavailable")
+			return true
+		}
+		defer f.Close()
+
+		ctx.Send(ftpcodes.FileStatusOkay, "File status OK")
+		io.Copy(f, conn)
+		ctx.Send(ftpcodes.ClosingDataConnection, "Store completed")
 		return true
 	})
 
