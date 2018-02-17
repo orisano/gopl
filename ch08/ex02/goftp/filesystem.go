@@ -2,6 +2,7 @@ package goftp
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -9,6 +10,7 @@ import (
 type FileSystem interface {
 	Get(path string) (io.ReadCloser, error)
 	Create(path string) (io.WriteCloser, error)
+	ListDir(path string) ([]string, error)
 }
 
 type RawFileSystem struct {
@@ -37,4 +39,17 @@ func (f *RawFileSystem) Create(path string) (io.WriteCloser, error) {
 		return nil, err
 	}
 	return file, nil
+}
+
+func (f *RawFileSystem) ListDir(path string) ([]string, error) {
+	p := f.resolve(path)
+	infoList, err := ioutil.ReadDir(p)
+	if err != nil {
+		return nil, err
+	}
+	var list []string
+	for _, info := range infoList {
+		list = append(list, info.Name())
+	}
+	return list, nil
 }

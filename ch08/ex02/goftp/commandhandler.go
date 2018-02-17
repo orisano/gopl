@@ -200,6 +200,35 @@ func DefalutCommandMux() *CommandMux {
 		return true
 	})
 
+	mux.OnFunc("LIST", func(ctx *Context) bool {
+		conn, err := ctx.DataConn()
+		if err != nil {
+			ctx.Logf("connection error occurred: %v", err)
+			ctx.Send(ftpcodes.ConnectionTrouble, "Connection trouble")
+			return true
+		}
+		defer conn.Close()
+
+		p := ctx.controlConn.workingDirectory
+		if len(ctx.Args) == 1 {
+			p = ctx.Args[0]
+		}
+
+		list, err := ctx.controlConn.fs.ListDir(p)
+		if err != nil {
+			ctx.Logf("failed to get list dir: %v", err)
+			ctx.Send(ftpcodes.LocalErrorInProcessing, "Requested action aborted. Local error in processing.")
+		}
+
+		ctx.Send(ftpcodes.FileStatusOkay, "File status OK")
+		for _, x := range list {
+			fmt.Fprint(conn, x, "\r\n")
+		}
+		ctx.Send(ftpcodes.ClosingDataConnection, "LIST completed")
+
+		return true
+	})
+
 	return mux
 }
 
