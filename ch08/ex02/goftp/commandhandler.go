@@ -48,7 +48,7 @@ func NewCommandMux() *CommandMux {
 	}
 }
 
-func DefalutCommandMux() *CommandMux {
+func DefaultCommandMux() *CommandMux {
 	mux := NewCommandMux()
 
 	mux.OnFunc("USER", func(ctx *Context) bool {
