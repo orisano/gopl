@@ -23,10 +23,10 @@ func (s *Server) Serve(l net.Listener) error {
 			continue
 		}
 		c := &ControlConn{
-			logger:           s.Logger,
-			conn:             conn,
-			fs:               s.FileSystem,
-			workingDirectory: "/",
+			logger: s.Logger,
+			conn:   conn,
+			fs:     s.FileSystem,
+			wd:     "/",
 
 			handler: mux,
 		}

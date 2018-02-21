@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"path"
 	"strconv"
 	"strings"
 
@@ -67,7 +68,7 @@ func DefaultCommandMux() *CommandMux {
 	})
 
 	mux.OnFunc("PWD", func(ctx *Context) bool {
-		ctx.Send(ftpcodes.Entering, fmt.Sprintf("%q current working directory", ctx.controlConn.workingDirectory))
+		ctx.Send(ftpcodes.Entering, fmt.Sprintf("%q current working directory", ctx.controlConn.GetWD()))
 		return true
 	})
 
@@ -171,6 +172,7 @@ func DefaultCommandMux() *CommandMux {
 			return true
 		}
 		defer f.Close()
+
 		ctx.Send(ftpcodes.FileStatusOkay, "File status OK")
 		io.Copy(conn, f)
 		ctx.Send(ftpcodes.ClosingDataConnection, "Transfer completed")
@@ -209,15 +211,20 @@ func DefaultCommandMux() *CommandMux {
 		}
 		defer conn.Close()
 
-		p := ctx.controlConn.workingDirectory
+		p := ctx.controlConn.wd
 		if len(ctx.Args) == 1 {
-			p = ctx.Args[0]
+			if strings.HasPrefix(ctx.Args[0], "/") {
+				p = ctx.Args[0]
+			} else {
+				p = path.Join(p, ctx.Args[0])
+			}
 		}
 
-		list, err := ctx.controlConn.fs.ListDir(p)
+		list, err := ctx.controlConn.fs.LS(p)
 		if err != nil {
 			ctx.Logf("failed to get list dir: %v", err)
 			ctx.Send(ftpcodes.LocalErrorInProcessing, "Requested action aborted. Local error in processing.")
+			return true
 		}
 
 		ctx.Send(ftpcodes.FileStatusOkay, "File status OK")
@@ -226,6 +233,100 @@ func DefaultCommandMux() *CommandMux {
 		}
 		ctx.Send(ftpcodes.ClosingDataConnection, "LIST completed")
 
+		return true
+	})
+
+	mux.OnFunc("NLST", func(ctx *Context) bool {
+		conn, err := ctx.DataConn()
+		if err != nil {
+			ctx.Logf("connection error occurred: %v", err)
+			ctx.Send(ftpcodes.ConnectionTrouble, "Connection trouble")
+			return true
+		}
+		defer conn.Close()
+
+		p := ctx.controlConn.wd
+		if len(ctx.Args) == 1 {
+			if strings.HasPrefix(ctx.Args[0], "/") {
+				p = ctx.Args[0]
+			} else {
+				p = path.Join(p, ctx.Args[0])
+			}
+		}
+
+		list, err := ctx.controlConn.fs.List(p)
+		if err != nil {
+			ctx.Logf("failed to get list dir: %v", err)
+			ctx.Send(ftpcodes.LocalErrorInProcessing, "Requested action aborted. Local error in processing.")
+			return true
+		}
+
+		ctx.Send(ftpcodes.FileStatusOkay, "File status OK")
+		for _, x := range list {
+			fmt.Fprint(conn, x, "\r\n")
+		}
+		ctx.Send(ftpcodes.ClosingDataConnection, "NLST completed")
+
+		return true
+	})
+
+	mux.OnFunc("EPRT", func(ctx *Context) bool {
+		tokens := strings.Split(ctx.Args[0], "|")
+		netProto := tokens[1]
+		netAddr := tokens[2]
+		portStr := tokens[3]
+
+		port, err := strconv.ParseUint(portStr, 10, 16)
+		if err != nil {
+			ctx.Logf("invalid port: %v", err)
+			CommandSyntaxError(ctx)
+			return true
+		}
+
+		var network string
+		switch netProto {
+		case "1": // IPv4
+			network = "ip4"
+		case "2": // IPv6
+			network = "ip6"
+		default:
+			panic("unknown protocol")
+		}
+
+		ip, err := net.ResolveIPAddr(network, netAddr)
+		if err != nil {
+			ctx.Logf("failed to resolve ip: %v", err)
+			CommandSyntaxError(ctx)
+			return true
+		}
+		ctx.controlConn.dataPort = &net.TCPAddr{
+			IP:   ip.IP,
+			Port: int(port),
+		}
+		CommandOK(ctx)
+		return true
+	})
+
+	mux.OnFunc("EPSV", func(ctx *Context) bool {
+		if ctx.controlConn.passive != nil {
+			ctx.controlConn.passive.Close()
+			ctx.controlConn.passive = nil
+		}
+		lis, err := net.Listen("tcp", ":0")
+		if err != nil {
+			ctx.Logf("failed to listen: %v", err)
+			ctx.Send(ftpcodes.LocalErrorInProcessing, "Failed to listen")
+			return true
+		}
+		ctx.controlConn.passive = lis
+
+		ctx.Send(ftpcodes.ExtenedPassiveModeEntered, fmt.Sprintf("Entering Extended Passive Mode (|||%v|)", lis.Addr().(*net.TCPAddr).Port))
+		return true
+	})
+
+	mux.OnFunc("CWD", func(ctx *Context) bool {
+		ctx.controlConn.ChangeWD(ctx.Args[0])
+		ctx.Send(ftpcodes.RequestedFileActionOkey, "OK")
 		return true
 	})
 

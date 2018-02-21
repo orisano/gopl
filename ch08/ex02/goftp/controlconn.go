@@ -5,24 +5,34 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/orisano/gopl/ch08/ex02/goftp/ftpcodes"
 )
 
 type ControlConn struct {
-	logger           *log.Logger
-	conn             net.Conn
-	fs               FileSystem
-	workingDirectory string
+	logger *log.Logger
+	conn   net.Conn
+	fs     FileSystem
+
+	wd     string
+	wdLock sync.RWMutex
 
 	dataPort *net.TCPAddr
+	passive  net.Listener
 
 	handler CommandHandler
 }
 
 func (c *ControlConn) Handle() {
 	defer c.conn.Close()
+	go func() {
+		if c.passive != nil {
+			c.passive.Close()
+		}
+	}()
 
 	c.Send(ftpcodes.ServiceReadyForNewUser, "goftp service")
 
@@ -52,6 +62,9 @@ func (c *ControlConn) Send(code int, msg string) error {
 }
 
 func (c *ControlConn) DataConn() (net.Conn, error) {
+	if c.passive != nil {
+		return c.passive.Accept()
+	}
 	src := *c.conn.LocalAddr().(*net.TCPAddr)
 	src.Port = src.Port - 1
 	var dst net.TCPAddr
@@ -61,4 +74,21 @@ func (c *ControlConn) DataConn() (net.Conn, error) {
 		dst = *c.conn.RemoteAddr().(*net.TCPAddr)
 	}
 	return net.DialTCP("tcp", &src, &dst)
+}
+
+func (c *ControlConn) GetWD() string {
+	c.wdLock.RLock()
+	defer c.wdLock.RUnlock()
+	return c.wd
+}
+
+func (c *ControlConn) ChangeWD(path string) error {
+	c.wdLock.Lock()
+	defer c.wdLock.Unlock()
+	wd, err := filepath.Abs(filepath.Join(c.wd, path))
+	if err != nil {
+		return err
+	}
+	c.wd = wd
+	return nil
 }

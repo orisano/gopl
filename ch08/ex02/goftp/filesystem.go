@@ -1,16 +1,19 @@
 package goftp
 
 import (
+	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 type FileSystem interface {
 	Get(path string) (io.ReadCloser, error)
 	Create(path string) (io.WriteCloser, error)
-	ListDir(path string) ([]string, error)
+	List(path string) ([]string, error)
+	LS(path string) ([]string, error)
 }
 
 type RawFileSystem struct {
@@ -41,15 +44,46 @@ func (f *RawFileSystem) Create(path string) (io.WriteCloser, error) {
 	return file, nil
 }
 
-func (f *RawFileSystem) ListDir(path string) ([]string, error) {
+func (f *RawFileSystem) List(path string) ([]string, error) {
 	p := f.resolve(path)
-	infoList, err := ioutil.ReadDir(p)
+	file, err := os.Open(p)
 	if err != nil {
 		return nil, err
 	}
-	var list []string
-	for _, info := range infoList {
-		list = append(list, info.Name())
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
 	}
-	return list, nil
+
+	var stats []os.FileInfo
+	if stat.IsDir() {
+		ss, err := file.Readdir(0)
+		if err != nil {
+			return nil, err
+		}
+		stats = ss
+	} else {
+		stats = append(stats, stat)
+	}
+
+	fileNames := make([]string, 0, len(stats))
+	for _, s := range stats {
+		fileNames = append(fileNames, s.Name())
+	}
+	return fileNames, nil
+}
+
+func (f *RawFileSystem) LS(path string) ([]string, error) {
+	p := f.resolve(path)
+	cmd := exec.Command("/bin/ls", "-l", p)
+	buf := bytes.NewBuffer(nil)
+	cmd.Stdout = buf
+	cmd.Stderr = buf
+
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+	return strings.Split(buf.String(), "\n"), nil
 }

@@ -44,6 +44,7 @@ const (
 	ClosingDataConnection             = PositiveCompletion + Connections + 6
 	ConnectionTrouble                 = TransientNegativeCompletion + Connections + 6
 	Entering                          = PositiveCompletion + Connections + 7
+	ExtenedPassiveModeEntered         = PositiveCompletion + Connections + 9
 	UserLoggedOn                      = PositiveCompletion + Authentication + 0
 	NotLoggedIn                       = PermanentNegativeCompletion + Authentication + 0
 	UserNameOkay                      = PositiveIntermediate + Authentication + 1
