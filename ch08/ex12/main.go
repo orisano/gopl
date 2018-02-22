@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 func main() {
@@ -68,13 +69,31 @@ func handleConn(conn net.Conn) {
 	entering <- client{ch, who}
 
 	input := bufio.NewScanner(conn)
-	for input.Scan() {
-		messages <- who + ": " + input.Text()
-	}
+	text := make(chan string)
+	go func() {
+		for input.Scan() {
+			text <- input.Text()
+		}
+		close(text)
+	}()
 
-	leaving <- client{ch, who}
-	messages <- who + " has left"
-	conn.Close()
+	defer func() {
+		leaving <- client{ch, who}
+		messages <- who + " has left"
+		conn.Close()
+	}()
+
+	for {
+		select {
+		case txt, ok := <-text:
+			if !ok {
+				return
+			}
+			messages <- who + ": " + txt
+		case <-time.After(5 * time.Minute):
+			return
+		}
+	}
 }
 
 func clientWriter(conn net.Conn, ch <-chan string) {
