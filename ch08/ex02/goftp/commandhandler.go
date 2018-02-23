@@ -330,6 +330,26 @@ func DefaultCommandMux() *CommandMux {
 		return true
 	})
 
+	mux.OnFunc("PASV", func(ctx *Context) bool {
+		if ctx.controlConn.passive != nil {
+			ctx.controlConn.passive.Close()
+			ctx.controlConn.passive = nil
+		}
+		lis, err := net.Listen("tcp", ":0")
+		if err != nil {
+			ctx.Logf("failed to listen: %v", err)
+			ctx.Send(ftpcodes.LocalErrorInProcessing, "Failed to listen")
+			return true
+		}
+		ctx.controlConn.passive = lis
+
+		addr := lis.Addr().(*net.TCPAddr)
+		b := []byte(addr.IP.To4())
+		ctx.Send(ftpcodes.Entering, fmt.Sprintf("Entering Passive Mode. %d,%d,%d,%d,%d,%d", b[0], b[1], b[2], b[3], addr.Port / 256, addr.Port % 256))
+
+		return true
+	})
+
 	return mux
 }
 
