@@ -85,7 +85,7 @@ func (c *ControlConn) GetWD() string {
 func (c *ControlConn) ChangeWD(path string) error {
 	c.wdLock.Lock()
 	defer c.wdLock.Unlock()
-	wd, err := filepath.Abs(filepath.Join(c.wd, path))
+	wd, err := filepath.Abs(filepath.Join(c.wd, filepath.FromSlash(path)))
 	if err != nil {
 		return err
 	}
