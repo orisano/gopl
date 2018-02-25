@@ -26,7 +26,7 @@ type ControlConn struct {
 
 func (c *ControlConn) Handle() {
 	defer c.conn.Close()
-	go func() {
+	defer func() {
 		if c.passive != nil {
 			c.passive.Close()
 		}
