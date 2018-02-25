@@ -14,6 +14,7 @@ type FileSystem interface {
 	Create(path string) (io.WriteCloser, error)
 	List(path string) ([]string, error)
 	LS(path string) ([]string, error)
+	IsDir(path string) bool
 }
 
 type RawFileSystem struct {
@@ -77,7 +78,7 @@ func (f *RawFileSystem) List(path string) ([]string, error) {
 
 func (f *RawFileSystem) LS(path string) ([]string, error) {
 	p := f.resolve(path)
-	cmd := exec.Command("/bin/ls", "-l", p)
+	cmd := exec.Command("/bin/ls", "-lah", p)
 	buf := bytes.NewBuffer(nil)
 	cmd.Stdout = buf
 	cmd.Stderr = buf
@@ -86,4 +87,13 @@ func (f *RawFileSystem) LS(path string) ([]string, error) {
 		return nil, err
 	}
 	return strings.Split(buf.String(), "\n"), nil
+}
+
+func (f *RawFileSystem) IsDir(path string) bool {
+	p := f.resolve(path)
+	stat, err := os.Stat(p)
+	if err != nil {
+		return false
+	}
+	return stat.IsDir()
 }

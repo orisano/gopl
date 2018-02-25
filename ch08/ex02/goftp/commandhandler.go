@@ -325,8 +325,31 @@ func DefaultCommandMux() *CommandMux {
 	})
 
 	mux.OnFunc("CWD", func(ctx *Context) bool {
+		if !ctx.controlConn.fs.IsDir(ctx.Args[0]) {
+			ctx.Send(431, "No such directory")
+			return true
+		}
 		ctx.controlConn.ChangeWD(ctx.Args[0])
 		ctx.Send(ftpcodes.RequestedFileActionOkey, "OK")
+		return true
+	})
+
+	mux.OnFunc("PASV", func(ctx *Context) bool {
+		if ctx.controlConn.passive != nil {
+			ctx.controlConn.passive.Close()
+			ctx.controlConn.passive = nil
+		}
+		lis, err := net.Listen("tcp", ":0")
+		if err != nil {
+			ctx.Logf("failed to listen: %v", err)
+			ctx.Send(ftpcodes.LocalErrorInProcessing, "Failed to listen")
+			return true
+		}
+		ctx.controlConn.passive = lis
+
+		addr := lis.Addr().(*net.TCPAddr)
+		ctx.Send(ftpcodes.Entering, fmt.Sprintf("Entering Passive Mode. 127,0,0,1,%d,%d", addr.Port / 256, addr.Port % 256))
+
 		return true
 	})
 
