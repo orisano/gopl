@@ -7,7 +7,6 @@ import (
 	"net"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/orisano/gopl/ch08/ex02/goftp/ftpcodes"
 )
@@ -17,8 +16,7 @@ type ControlConn struct {
 	conn   net.Conn
 	fs     FileSystem
 
-	wd     string
-	wdLock sync.RWMutex
+	wd string
 
 	dataPort *net.TCPAddr
 	passive  net.Listener
@@ -77,14 +75,10 @@ func (c *ControlConn) DataConn() (net.Conn, error) {
 }
 
 func (c *ControlConn) GetWD() string {
-	c.wdLock.RLock()
-	defer c.wdLock.RUnlock()
 	return c.wd
 }
 
 func (c *ControlConn) ChangeWD(path string) error {
-	c.wdLock.Lock()
-	defer c.wdLock.Unlock()
 	wd, err := filepath.Abs(filepath.Join(c.wd, path))
 	if err != nil {
 		return err
