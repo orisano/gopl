@@ -61,6 +61,10 @@ func (c *ControlConn) Logf(format string, v ...interface{}) {
 	c.logger.Printf(format, v...)
 }
 
+func (c *ControlConn) Addr() *net.TCPAddr {
+	return c.conn.LocalAddr().(*net.TCPAddr)
+}
+
 func (c *ControlConn) handle() {
 	defer c.conn.Close()
 	defer c.closeSource()

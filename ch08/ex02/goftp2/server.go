@@ -35,12 +35,16 @@ func (s *Server) Serve(l net.Listener) error {
 			s.Logger.Printf("failed to accept: %v", err)
 			continue
 		}
+
+		src := dataAddr(conn.LocalAddr().(*net.TCPAddr))
+		dst := conn.RemoteAddr().(*net.TCPAddr)
+
 		c := &ControlConn{
 			logger: logger,
 			fs:     s.FileSystem,
 
 			conn:    conn,
-			connSrc: NewActiveMode(conn, nil),
+			connSrc: NewActiveMode(src, dst),
 
 			workingDir: "/",
 
@@ -63,4 +67,10 @@ func ListenAndServe(addr string, fs FileSystem) error {
 		return err
 	}
 	return Serve(l, fs)
+}
+
+func dataAddr(connAddr *net.TCPAddr) *net.TCPAddr {
+	addr := *connAddr
+	addr.Port = addr.Port - 1
+	return &addr
 }

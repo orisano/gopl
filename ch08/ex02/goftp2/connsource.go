@@ -16,14 +16,8 @@ func (m *ActiveMode) Conn() (net.Conn, error) {
 	return net.DialTCP("tcp", m.src, m.dst)
 }
 
-func NewActiveMode(conn net.Conn, dst *net.TCPAddr) *ActiveMode {
-	src := *conn.LocalAddr().(*net.TCPAddr)
-	src.Port = src.Port - 1
-
-	if dst == nil {
-		dst = conn.RemoteAddr().(*net.TCPAddr)
-	}
-	return &ActiveMode{src: &src, dst: dst}
+func NewActiveMode(src, dst *net.TCPAddr) *ActiveMode {
+	return &ActiveMode{src: src, dst: dst}
 }
 
 type PassiveMode struct {

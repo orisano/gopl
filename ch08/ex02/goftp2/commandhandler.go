@@ -2,6 +2,8 @@ package goftp2
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 )
 
@@ -65,9 +67,43 @@ func DefaultCommandMux() *CommandMux {
 	})
 
 	mux.OnFunc("PORT", func(ctx *Context) {
+		tokens := strings.Split(ctx.Arg, ",")
+		p := &octetParser{}
+		h1 := p.Parse(tokens[0])
+		h2 := p.Parse(tokens[1])
+		h3 := p.Parse(tokens[2])
+		h4 := p.Parse(tokens[3])
+		p1 := p.Parse(tokens[4])
+		p2 := p.Parse(tokens[5])
 
+		src := dataAddr(ctx.Addr())
+		dst := &net.TCPAddr{
+			IP:   net.IPv4(h1, h2, h3, h4),
+			Port: int(p1)*256 + int(p2),
+		}
+		ctx.ChangeSource(NewActiveMode(src, dst))
 		CommandOK(ctx)
 	})
 
 	return mux
+}
+
+type octetParser struct {
+	err error
+}
+
+func (p *octetParser) Parse(s string) byte {
+	if p.err != nil {
+		return 0
+	}
+	x, err := strconv.ParseUint(s, 10, 8)
+	if err != nil {
+		p.err = err
+		return 0
+	}
+	return byte(x)
+}
+
+func (p *octetParser) Err() error {
+	return p.err
 }
