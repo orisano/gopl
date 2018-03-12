@@ -1,7 +1,6 @@
 package goftp2
 
 import (
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -83,7 +82,7 @@ func DefaultCommandMux() *CommandMux {
 
 	// returns: 257, 500, 501, 502, 421, 550
 	mux.OnFunc("PWD", func(ctx *Context) {
-		ctx.Send(227, fmt.Sprintf("%q current working directory", ctx.GetWD()))
+		PathCreated(ctx, ctx.GetWD())
 	})
 
 	mux.OnFunc("FEAT", func(ctx *Context) {
