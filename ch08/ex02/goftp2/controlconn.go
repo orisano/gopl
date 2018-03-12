@@ -65,6 +65,7 @@ func (c *ControlConn) Addr() *net.TCPAddr {
 	return c.conn.LocalAddr().(*net.TCPAddr)
 }
 
+// returns: 120, 220, 421
 func (c *ControlConn) handle() {
 	defer c.conn.Close()
 	defer c.closeSource()

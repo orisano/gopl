@@ -45,19 +45,43 @@ func NewCommandMux() *CommandMux {
 func DefaultCommandMux() *CommandMux {
 	mux := NewCommandMux()
 
+	// 200: The requested action has been successfully completed.
+	// 215:
+	// 	NAME system type.
+	// 	Where NAME is an official system name from the registry kept by IANA.
+	// 220: Service ready for new user.
+	// 221: Service closing control connection.
+	// 230: User logged in, proceed. Logged out if appropriate.
+	// 257: "PATHNAME" created.
+	// 331: User name okay, need password.
+	// 332: Need account for login.
+	// 421:
+	// 	Service not available, closing control connection.
+	// 	This may be a reply to any command if the service knows it must shut down.
+	// 500:
+	// 	Syntax error, command unrecognized and the requested action did not take place.
+	// 	This may include errors such as command line too long.
+	// 501: Syntax error in parameters or arguments.
+	// 502: Command not implemented.
+	// 550: Requested action not taken. File unavailable (e.g., file not found, no access).
+
+	// returns: 230, 530, 500, 501, 421, 331, 332
 	mux.OnFunc("USER", func(ctx *Context) {
 		ctx.Send(230, "Welcome")
 	})
 
+	// returns: 221, 500
 	mux.OnFunc("QUIT", func(ctx *Context) {
 		ctx.Send(221, "Bye")
 		ctx.Close()
 	})
 
+	// returns: 215, 500, 501, 502, 421
 	mux.OnFunc("SYST", func(ctx *Context) {
 		ctx.Send(215, "OSX system type")
 	})
 
+	// returns: 257, 500, 501, 502, 421, 550
 	mux.OnFunc("PWD", func(ctx *Context) {
 		ctx.Send(227, fmt.Sprintf("%q current working directory", ctx.GetWD()))
 	})
@@ -66,6 +90,7 @@ func DefaultCommandMux() *CommandMux {
 		ctx.Send(211, "No Feature")
 	})
 
+	// returns: 200, 500, 501, 421, 530
 	mux.OnFunc("PORT", func(ctx *Context) {
 		tokens := strings.Split(ctx.Arg, ",")
 		p := &octetParser{}
