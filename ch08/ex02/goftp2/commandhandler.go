@@ -92,6 +92,11 @@ func DefaultCommandMux() *CommandMux {
 	// returns: 200, 500, 501, 421, 530
 	mux.OnFunc("PORT", func(ctx *Context) {
 		tokens := strings.Split(ctx.Arg, ",")
+		if len(tokens) != 6 {
+			InvalidParametersOrArguments(ctx)
+			return
+		}
+
 		p := &octetParser{}
 		h1 := p.Parse(tokens[0])
 		h2 := p.Parse(tokens[1])
@@ -99,6 +104,10 @@ func DefaultCommandMux() *CommandMux {
 		h4 := p.Parse(tokens[3])
 		p1 := p.Parse(tokens[4])
 		p2 := p.Parse(tokens[5])
+		if err := p.Err(); err != nil {
+			InvalidParametersOrArguments(ctx)
+			return
+		}
 
 		src := dataAddr(ctx.Addr())
 		dst := &net.TCPAddr{
