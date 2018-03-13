@@ -22,6 +22,7 @@ func (m *CommandMux) Handle(ctx *Context) {
 	cmd := strings.ToLower(ctx.Command)
 	h, ok := m.handlers[cmd]
 	if !ok {
+		CommandNotImplemented(ctx)
 		return
 	}
 	h.Handle(ctx)
