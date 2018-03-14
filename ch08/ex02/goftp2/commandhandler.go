@@ -119,6 +119,10 @@ func DefaultCommandMux() *CommandMux {
 		CommandOK(ctx)
 	})
 
+	mux.OnFunc("NOOP", func(ctx *Context) {
+		CommandOK(ctx)
+	})
+
 	return mux
 }
 
