@@ -174,7 +174,10 @@ func DefaultCommandMux() *CommandMux {
 		defer conn.Close()
 
 		ctx.Send(125, "Data connection already open; transfer starting")
-		io.Copy(conn, f)
+		if _, err := io.Copy(conn, f); err != nil {
+			ctx.Send(426, "Connection closed; transfer aborted.")
+			return
+		}
 		ctx.Send(226, "Closing data connection; Requested file action successful")
 	})
 
