@@ -1,6 +1,8 @@
 package goftp2
 
 import (
+	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -137,6 +139,43 @@ func DefaultCommandMux() *CommandMux {
 
 	// returns: 125, 150, 226, 250, 421, 425, 426, 450, 451, 500, 501, 530, 550
 	mux.OnFunc("RETR", func(ctx *Context) {
+		if len(ctx.Arg) == 0 {
+			InvalidParametersOrArguments(ctx)
+			return
+		}
+		p := ctx.ResolvePath(ctx.Arg)
+
+		stat, err := ctx.FS().Stat(p)
+		if err == ErrNotFound {
+			ctx.Send(550, "Requested action not taken. File unavailable")
+			return
+		}
+		if err != nil {
+			ctx.Send(451, "Requested action aborted: local error in processing.")
+			return
+		}
+		if stat.IsDir {
+			ctx.Send(550, fmt.Sprintf("Requested action not taken. %q is directory", p))
+			return
+		}
+
+		f, err := ctx.FS().Open(p)
+		if err != nil {
+			ctx.Send(451, "Requested action aborted: local error in processing.")
+			return
+		}
+		defer f.Close()
+
+		conn, err := ctx.DataConn()
+		if err != nil {
+			ctx.Send(425, "Can't open data connection")
+			return
+		}
+		defer conn.Close()
+
+		ctx.Send(125, "Data connection already open; transfer starting")
+		io.Copy(conn, f)
+		ctx.Send(226, "Closing data connection; Requested file action successful")
 	})
 
 	return mux
