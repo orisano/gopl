@@ -21,7 +21,7 @@ func PopCount(x uint64) int {
 
 func PopCountNaive(x uint64) int {
 	r := uint64(0)
-	for i := uint(0); i < 8; i++ {
+	for i := uint(0); i < 64; i++ {
 		r += (x >> i) & 1
 	}
 	return int(r)
