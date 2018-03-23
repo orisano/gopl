@@ -56,7 +56,11 @@ func execGoList(pkgs ...string) ([]packageInfo, error) {
 	}
 	defer stdout.Close()
 
-	go cmd.Start()
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+
+	go cmd.Wait()
 
 	dec := json.NewDecoder(stdout)
 	var ps []packageInfo
