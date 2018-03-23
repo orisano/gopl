@@ -20,15 +20,17 @@ type File struct {
 
 type format struct {
 	name      string
+	offset    int
 	magic     []byte
 	unarchive func(io.Reader) (Archive, error)
 }
 
 var formats []format
 
-func RegisterFormat(name string, magic []byte, unarchive func(io.Reader) (Archive, error)) {
+func RegisterFormat(name string, offset int, magic []byte, unarchive func(io.Reader) (Archive, error)) {
 	formats = append(formats, format{
 		name:      name,
+		offset:    offset,
 		magic:     magic,
 		unarchive: unarchive,
 	})
@@ -62,8 +64,8 @@ func asPeeker(r io.Reader) (io.Reader, peeker) {
 
 func sniff(p peeker) format {
 	for _, f := range formats {
-		b, err := p.Peek(len(f.magic))
-		if err == nil && bytes.Equal(b, f.magic) {
+		b, err := p.Peek(f.offset + len(f.magic))
+		if err == nil && bytes.Equal(b[f.offset:], f.magic) {
 			return f
 		}
 	}

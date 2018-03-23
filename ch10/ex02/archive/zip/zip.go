@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	archive.RegisterFormat("zip", []byte{'P', 'K', 0x05, 0x06}, Unarchive)
+	archive.RegisterFormat("zip", 0, []byte{'P', 'K', 0x05, 0x06}, Unarchive)
 }
 
 type Archive struct {

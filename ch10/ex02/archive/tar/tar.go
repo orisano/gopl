@@ -9,8 +9,8 @@ import (
 )
 
 func init() {
-	archive.RegisterFormat("tar", []byte("ustar.00"), Unarchive)
-	archive.RegisterFormat("tar", []byte("ustar . "), Unarchive)
+	archive.RegisterFormat("tar", 0x101, []byte("ustar.00"), Unarchive)
+	archive.RegisterFormat("tar", 0x101, []byte("ustar . "), Unarchive)
 }
 
 type Archive struct {
