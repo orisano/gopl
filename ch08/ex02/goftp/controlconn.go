@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"path/filepath"
 	"strings"
+	pathpkg "path"
 
 	"github.com/orisano/gopl/ch08/ex02/goftp/ftpcodes"
 )
@@ -79,10 +79,6 @@ func (c *ControlConn) GetWD() string {
 }
 
 func (c *ControlConn) ChangeWD(path string) error {
-	wd, err := filepath.Abs(filepath.Join(c.wd, path))
-	if err != nil {
-		return err
-	}
-	c.wd = wd
+	c.wd = pathpkg.Clean(pathpkg.Join(c.wd, path))
 	return nil
 }
