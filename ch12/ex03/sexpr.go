@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 func encode(buf *bytes.Buffer, v reflect.Value) error {
@@ -70,6 +71,12 @@ func encode(buf *bytes.Buffer, v reflect.Value) error {
 	case reflect.Complex64, reflect.Complex128:
 		z := v.Complex()
 		fmt.Fprintf(buf, "#C(%v %v)", real(z), imag(z))
+	case reflect.Interface:
+		buf.WriteByte('(')
+		buf.WriteString(strconv.Quote(v.Elem().Type().String()))
+		buf.WriteByte(' ')
+		encode(buf, v.Elem())
+		buf.WriteByte(')')
 	default:
 		return fmt.Errorf("unsupported type: %s", v.Type())
 	}
