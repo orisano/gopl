@@ -40,6 +40,14 @@ func TestPack(t *testing.T) {
 			},
 			expected: "q=hello&q=world",
 		},
+		{
+			in: &struct {
+				tag int `http:"TAG"`
+			}{
+				42,
+			},
+			expected: "TAG=42",
+		},
 	}
 
 	for _, test := range tests {
