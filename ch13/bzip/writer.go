@@ -59,7 +59,7 @@ func (w *writer) Close() error {
 	}()
 	for {
 		inlen, outlen := C.uint(0), C.uint(cap(w.outbuf))
-		r := C.bz2compress(w.stream, C.BZ_FINISH, nil, &inlen, (*C.char)(unsafe.Pointer(&w.outbuf), &outlen))
+		r := C.bz2compress(w.stream, C.BZ_FINISH, nil, &inlen, (*C.char)(unsafe.Pointer(&w.outbuf)), &outlen)
 		if _, err := w.w.Write(w.outbuf[:outlen]); err != nil {
 			return err
 		}
