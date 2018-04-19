@@ -1,0 +1,97 @@
+Go研修振り返り
+
+20 April 2018
+
+
+與那城 有
+株式会社リクルートテクノロジーズ
+yonashiro@r.recruit.co.jp
+https://github.com/orisano
+@orisano
+
+* 振り返り
+
+Go研修などを通してGoを結構書いた半年になりました.
+最初は研修を甘く見ていましたが結果甘くなかったです.
+
+こういう風に練習問題をすべてやる,
+人と一緒にやるという経験がなかったので新鮮でした.
+
+技術書を読んで練習問題を脳内でわかった気になることが多かったので
+これからは取り組んで行こうと思います.
+
+Goは良い言語だし, 学習コストも高くないです. goroutineが良い.
+でも豊富な言語機能がある言語を使っている人から見ると貧弱に見えるし
+筋肉でコードを書くことを決意できないと厳しいかもしれないと思いました.
+
+* 作ったライブラリ - part1
+
+.link https://github.com/orisano/backlog github.com/orisano/backlog
+backlogのAPI client. 日報botを作るために作った.
+
+.link https://github.com/recruit-tech/go-ams github.com/recruit-tech/go-ams
+Azure Media ServiceのAPI client. 技術調査のために作った.
+
+.link https://github.com/orisano/go-damm github.com/orisano/go-damm
+なんか凄いチェックディジットのアルゴリズム. twitterで流れてきたので作った.
+
+.link https://github.com/orisano/go-retry github.com/orisano/go-retry
+指数リトライのライブラリ. go-amsとか作っていたら欲しくなったので作った. 失敗作.
+
+.link https://github.com/orisano/fulltextsearch github.com/orisano/fulltextsearch
+全文検索っぽいの一度作ってみたかったので作った.
+
+* 作ったライブラリ - part2
+
+.link https://github.com/orisano/go-adal github.com/orisano/go-adal
+Active Directory Authentication Library. go-ams作る時に必要だから作った.
+nodejsの実装を移植したもの.すこし使われているっぽい.
+
+.link https://github.com/orisano/impast github.com/orisano/impast
+外部ライブラリのASTの取得ができるようになるライブラリ.
+struct->interfaceやinterface->stub, interface->mockなどのツールも入っている.
+そこそこ便利だとは思う. 個人的に気に入っている.
+
+.link https://github.com/orisano/gomasio github.com/orisano/gomasio
+golangのsocket.io client ライブラリ.
+socket.ioの負荷試験をやっているところをみて作りたくなったので作った.
+socket.ioにそこそこ詳しくなった.
+個人的に気に入っている.
+
+* 作ったライブラリ - part3
+
+.link https://github.com/orisano/httpc github.com/orisano/httpc
+API Client用のライブラリ. API Clientを書くことが多かったから作った.
+基本的にnet/httpの構造体とかを受け取ったり返したりする.
+httpステータスコードやヘッダーからよしなにリトライしてくれる機能や,
+リクエストを簡単に組み立てられる機能,
+リクエスト,レスポンスをダンプできるトランスポートなど.
+個人的に気に入っている.
+
+.link https://github.com/orisano/gorputil github.com/orisano/gorputil
+github.com/go-gorp/gorp のクエリをスレーブに投げたり雑多な感じのライブラリ
+
+.link https://github.com/orisano/gproject github.com/orisano/gproject
+Google Cloud SDK準拠のproject idを取得するライブラリ.
+小さいライブラリだけどそれなりに使えそう.
+
+* 作ったライブラリ - part4
+
+.link https://github.com/orisano/mailo github.com/orisano/mailo
+標準のnet/mailは対応してない文字コードが多かったので薄くラップする感じで作った.
+
+.link https://github.com/orisano/uds github.com/orisano/uds
+golangでのunix domain socketの使い方を毎回忘れるのでライブラリ化したもの.
+ISUCONでは毎回使っている. なんだかんだで作ったもので一番使っている気がする.
+
+* 意気込み
+
+会社ではまだ市民権を得ていない言語.
+ちゃんと理解されていないところがあるので布教していきたい.
+
+業務で使ってみると考慮できてなかったところがボロボロ出てくるので
+知見をためていきたい.
+
+* 最後に
+
+徹夜は良くない
