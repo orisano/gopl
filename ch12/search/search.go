@@ -1,7 +1,8 @@
-package search
+package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/orisano/gopl/ch12/params"
@@ -19,4 +20,9 @@ func search(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 	fmt.Fprintf(resp, "Search: %+v\n", data)
+}
+
+func main() {
+	http.HandleFunc("/search", search)
+	log.Fatal(http.ListenAndServe(":12345", nil))
 }
