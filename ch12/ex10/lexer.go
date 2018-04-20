@@ -208,6 +208,8 @@ func getType(t string) reflect.Type {
 		return reflect.ValueOf(rune(0)).Type()
 	case "string":
 		return reflect.ValueOf("").Type()
+	case "interface{}":
+		return reflect.TypeOf([]interface{}{}).Elem()
 	}
 
 	if strings.HasPrefix(t, "[]") {

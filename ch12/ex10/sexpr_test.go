@@ -156,4 +156,17 @@ func TestUnmarshal(t *testing.T) {
 			t.Errorf("unexpected value. expected: %#v, but got: %#v", expected, i)
 		}
 	})
+	t.Run("InterfaceMapInterface", func(t *testing.T) {
+		var i interface{}
+		if err := Unmarshal([]byte(`("map[string]interface{}" (("a" ("[]int" (1 2 3))) ("b" ("string" "hello"))))`), &i); err != nil {
+			t.Fatal(err)
+		}
+		expected := map[string]interface{}{
+			"a":     []int{1, 2, 3},
+			"b":     "hello",
+		}
+		if !reflect.DeepEqual(i, expected) {
+			t.Errorf("unexpected value. expected: %#v, but got: %#v", expected, i)
+		}
+	})
 }
